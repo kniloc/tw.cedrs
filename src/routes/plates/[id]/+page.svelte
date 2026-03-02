@@ -15,8 +15,6 @@
     <section class="plate-grid">
         {#each data.plates as plate}
             <LicensePlate src={plate.image_url} text={plate.plate_number} color={plate.text_color}/>
-            <LicensePlate src={plate.image_url} text={plate.plate_number} color={plate.text_color}/>
-            <LicensePlate src={plate.image_url} text={plate.plate_number} color={plate.text_color}/>
         {/each}
     </section>
 </main>
