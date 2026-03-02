@@ -1,0 +1,18 @@
+@font-face {
+    font-family: 'Dealerplate';
+    src: url('./fonts/dealerplate-california.woff2') format('woff2'),
+         url('./fonts/dealerplate-california.woff') format('woff');
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+*:not(dialog) {
+    margin: 0;
+    font-weight: normal;
+}
+
+body {
+    font-family: "Monaspace Argon", monospace;
+}
