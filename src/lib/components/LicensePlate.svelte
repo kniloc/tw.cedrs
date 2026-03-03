@@ -2,111 +2,7 @@
     let {src, text, color = '#000000'} = $props();
 
     let canvasEl;
-    const MARKER_RGB = [255, 0, 255];
-    const TOLERANCE = 15;
-
-    function pixelIndex(x, y, width) {
-        return (y * width + x) * 4;
-    }
-
-    function isMarker(pixels, i) {
-        return Math.abs(pixels[i] - MARKER_RGB[0]) <= TOLERANCE
-            && Math.abs(pixels[i + 1] - MARKER_RGB[1]) <= TOLERANCE
-            && Math.abs(pixels[i + 2] - MARKER_RGB[2]) <= TOLERANCE
-            && pixels[i + 3] > 200;
-    }
-
-    function getPixels(ctx, width, height) {
-        return ctx.getImageData(0, 0, width, height);
-    }
-
-    function findMarkerRegions(pixels, width, height) {
-        const markerCols = new Set();
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                if (isMarker(pixels, pixelIndex(x, y, width))) {
-                    markerCols.add(x);
-                }
-            }
-        }
-        if (markerCols.size === 0) return [];
-
-        const cols = [...markerCols].sort((a, b) => a - b);
-        const groups = [[cols[0]]];
-        for (let i = 1; i < cols.length; i++) {
-            if (cols[i] - cols[i - 1] > 1) groups.push([]);
-            groups[groups.length - 1].push(cols[i]);
-        }
-
-        return groups.map(group => {
-            const minX = group[0], maxX = group[group.length - 1];
-            let minY = height, maxY = 0;
-
-            for (let y = 0; y < height; y++) {
-                for (const x of group) {
-                    if (isMarker(pixels, pixelIndex(x, y, width))) {
-                        minY = Math.min(minY, y);
-                        maxY = Math.max(maxY, y);
-                        break;
-                    }
-                }
-            }
-
-            const midX = (minX + maxX) >> 1, midY = (minY + maxY) >> 1;
-            const inset = (startVal, endVal, step, fixedAxis, vertical) => {
-                let count = 0;
-                for (let v = startVal; step > 0 ? v <= endVal : v >= endVal; v += step) {
-                    const i = vertical ? pixelIndex(fixedAxis, v, width) : pixelIndex(v, fixedAxis, width);
-                    if (!isMarker(pixels, i)) break;
-                    count++;
-                }
-                return count;
-            };
-
-            const left = inset(minX, maxX, 1, midY, false);
-            const right = inset(maxX, minX, -1, midY, false);
-            const top = inset(minY, maxY, 1, midX, true);
-            const bottom = inset(maxY, minY, -1, midX, true);
-
-            return {
-                x: minX + left,
-                y: minY + top,
-                w: maxX + 1 - right - (minX + left),
-                h: maxY + 1 - bottom - (minY + top)
-            };
-        });
-    }
-
-    function clearMarkers(imageData, width, height) {
-        const pixels = imageData.data;
-        const markers = [];
-
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = pixelIndex(x, y, width);
-                if (isMarker(pixels, i)) markers.push({x, y, i});
-            }
-        }
-
-        for (const {x, y, i} of markers) {
-            for (let r = 1; r <= 10; r++) {
-                let found = false;
-                for (let dy = -r; dy <= r && !found; dy++) {
-                    for (let dx = -r; dx <= r && !found; dx++) {
-                        if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
-                        const nx = x + dx, ny = y + dy;
-                        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-                        const ni = pixelIndex(nx, ny, width);
-                        if (!isMarker(pixels, ni)) {
-                            pixels.copyWithin(i, ni, ni + 4);
-                            found = true;
-                        }
-                    }
-                }
-                if (found) break;
-            }
-        }
-    }
+    let worker;
 
     function splitTextToRegions(text, regionCount) {
         const segments = text.split(' ');
@@ -141,21 +37,29 @@
         ctx.drawImage(loadedImg, 0, 0);
 
         const {width, height} = canvasEl;
-        const imageData = getPixels(ctx, width, height);
-        const regions = findMarkerRegions(imageData.data, width, height);
-        if (regions.length === 0) return;
+        const imageData = ctx.getImageData(0, 0, width, height);
 
-        clearMarkers(imageData, width, height);
-        ctx.putImageData(imageData, 0, 0);
+        worker.onmessage = ({data: {regions, imageData: processed}}) => {
+            if (regions.length === 0) return;
+            ctx.putImageData(processed, 0, 0);
 
-        const segments = splitTextToRegions(text, regions.length);
-        regions.forEach((region, i) => {
-            renderTextToRegion(ctx, segments[i] ?? segments[segments.length - 1], region, color);
-        });
+            const segments = splitTextToRegions(text, regions.length);
+            regions.forEach((region, i) => {
+                renderTextToRegion(ctx, segments[i] ?? segments[segments.length - 1], region, color);
+            });
+        };
+
+        worker.postMessage({imageData, width, height}, [imageData.data.buffer]);
     }
 
     $effect(() => {
         if (!src || !canvasEl) return;
+        if (!worker) {
+            worker = new Worker(
+                new URL('$lib/workers/plateProcessor.js', import.meta.url),
+                {type: 'module'}
+            );
+        }
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => bakeText(img);
