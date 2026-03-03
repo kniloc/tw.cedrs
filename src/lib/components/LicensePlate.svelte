@@ -62,7 +62,10 @@
         }
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => bakeText(img);
+        img.onload = async () => {
+            await document.fonts.ready;
+            bakeText(img);
+        };
         img.src = src;
     });
 </script>
