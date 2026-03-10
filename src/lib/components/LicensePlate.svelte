@@ -20,12 +20,17 @@
         const tmp = new OffscreenCanvas(1, 1);
         const tmpCtx = tmp.getContext('2d');
         tmpCtx.font = font;
-        tmp.width = Math.ceil(tmpCtx.measureText(segment).width);
-        tmp.height = fontSize;
+        const metrics = tmpCtx.measureText(segment);
+        const textW = Math.ceil(metrics.width);
+        const textH = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+        const baseline = Math.ceil(metrics.actualBoundingBoxAscent);
+
+        tmp.width = textW;
+        tmp.height = textH;
         tmpCtx.font = font;
         tmpCtx.fillStyle = color;
-        tmpCtx.textBaseline = 'top';
-        tmpCtx.fillText(segment, 0, 0);
+        tmpCtx.textBaseline = 'alphabetic';
+        tmpCtx.fillText(segment, 0, baseline);
 
         ctx.drawImage(tmp, region.x, region.y, region.w, region.h);
     }
@@ -63,7 +68,7 @@
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = async () => {
-            await document.fonts.ready;
+            await document.fonts.load("1px 'Dealerplate'");
             bakeText(img);
         };
         img.src = src;
