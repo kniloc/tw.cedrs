@@ -13,12 +13,12 @@
 		"@sveltejs/adapter-vercel": "^6.3.1",
 		"@sveltejs/kit": "^2.53.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
-		"svelte": "^5.53.6",
+		"svelte": "^5.53.7",
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
 		"@fontsource/monaspace-argon": "^5.2.5",
-		"@vercel/blob": "^2.3.0",
-		"pg": "^8.19.0"
+		"@vercel/blob": "^2.3.1",
+		"pg": "^8.20.0"
 	}
 }
