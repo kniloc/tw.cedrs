@@ -10,15 +10,15 @@
 		"prepare": "svelte-kit sync || echo ''"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-vercel": "^6.3.1",
-		"@sveltejs/kit": "^2.61.1",
-		"@sveltejs/vite-plugin-svelte": "^7.1.2",
-		"svelte": "^5.55.10",
-		"vite": "^8.0.14"
+		"@sveltejs/adapter-vercel": "^6.3.4",
+		"@sveltejs/kit": "^2.69.3",
+		"@sveltejs/vite-plugin-svelte": "^7.2.0",
+		"svelte": "^5.56.4",
+		"vite": "^8.1.4"
 	},
 	"dependencies": {
 		"@fontsource/monaspace-argon": "^5.2.5",
-		"@vercel/blob": "^2.4.0",
-		"pg": "^8.21.0"
+		"@vercel/blob": "^2.6.1",
+		"pg": "^8.22.0"
 	}
 }
