@@ -1,3 +1,18 @@
+:root {
+    --bg: #303446;
+    --mantle: #292c3c;
+    --crust: #232634;
+    --text: #c6d0f5;
+    --subtext: #a5adce;
+    --surface0: #414559;
+    --surface1: #51576d;
+    --surface2: #626880;
+    --green: #a6d189;
+    --lavender: #babbf1;
+    --blue: #8caaee;
+    --border: #414559;
+}
+
 @font-face {
     font-family: 'Dealerplate';
     src: url('./fonts/dealerplate-california.woff2') format('woff2'),
@@ -15,4 +30,6 @@
 
 body {
     font-family: "Monaspace Argon", monospace;
+    background-color: var(--bg);
+    color: var(--text);
 }
