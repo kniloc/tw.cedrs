@@ -1,16 +1,22 @@
 :root {
-    --bg: #303446;
-    --mantle: #292c3c;
-    --crust: #232634;
-    --text: #c6d0f5;
-    --subtext: #a5adce;
-    --surface0: #414559;
-    --surface1: #51576d;
-    --surface2: #626880;
-    --green: #a6d189;
-    --lavender: #babbf1;
-    --blue: #8caaee;
-    --border: #414559;
+    --color-bg-base: #303446;
+    --color-bg-sunken: #292c3c;
+    --color-bg-deep: #232634;
+
+    --color-text-primary: #c6d0f5;
+    --color-text-muted: #a5adce;
+
+    --color-surface-low: #414559;
+    --color-surface-mid: #51576d;
+    --color-surface-high: #626880;
+
+    --color-accent-green: #a6d189;
+    --color-accent-lavender: #babbf1;
+    --color-accent-blue: #8caaee;
+
+    --color-border: var(--color-surface-low);
+
+    --font-mono: "Monaspace Argon", monospace;
 }
 
 @font-face {
@@ -29,7 +35,7 @@
 }
 
 body {
-    font-family: "Monaspace Argon", monospace;
-    background-color: var(--bg);
-    color: var(--text);
+    font-family: var(--font-mono);
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
 }

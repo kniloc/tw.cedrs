@@ -26,16 +26,18 @@
 
   function setGrid(updatedGrid) {
     tracks = tracks.map((t, i) =>
-      i === currentTrack ? { ...t, _grid: updatedGrid } : t
+            i === currentTrack ? { ...t, _grid: updatedGrid } : t
     );
   }
 
-  function handleCellClick(ri, col) {
-    const g = { ...currentGrid() };
+  let paintMode = $state(null); // 'add' | 'remove' | null while dragging
+
+  function applyPaint(ri, col, mode) {
     const k = cellKey(ri, col);
-    if (g[k]) {
-      delete g[k];
-    } else {
+    const exists = !!currentGrid()[k];
+    if ((mode === 'add' && exists) || (mode === 'remove' && !exists)) return;
+    const g = { ...currentGrid() };
+    if (mode === 'add') {
       g[k] = {
         note: rows[ri].note,
         oct: rows[ri].oct,
@@ -44,8 +46,27 @@
         dotted,
         dyn,
       };
+    } else {
+      delete g[k];
     }
     setGrid(g);
+  }
+
+  function handleCellClick(ri, col) {
+    applyPaint(ri, col, currentGrid()[cellKey(ri, col)] ? 'remove' : 'add');
+  }
+
+  function handlePaintStart(ri, col) {
+    paintMode = currentGrid()[cellKey(ri, col)] ? 'remove' : 'add';
+    applyPaint(ri, col, paintMode);
+  }
+
+  function handlePaintOver(ri, col) {
+    if (paintMode) applyPaint(ri, col, paintMode);
+  }
+
+  function handlePaintEnd() {
+    paintMode = null;
   }
 
   function handleRest() {
@@ -122,7 +143,7 @@
     const secPerBeat = 60 / tempo;
     const allEvents = tracks.map(t => gridToEvents(t._grid || {})).filter(e => e.length);
     const maxLen = Math.max(...allEvents.map(evs =>
-      evs.reduce((s, e) => s + durBeats(e.dur, e.dotted) * secPerBeat, 0)
+            evs.reduce((s, e) => s + durBeats(e.dur, e.dotted) * secPerBeat, 0)
     ));
 
     for (const evs of allEvents) {
@@ -135,7 +156,7 @@
           schedNote(ctx, midiToFreq(noteToMidi(ev.note, ev.acc, ev.oct)), gain, t, d);
         } else if (ev.type === 'chord') {
           ev.pitches.forEach(p =>
-            schedNote(ctx, midiToFreq(noteToMidi(p.note, p.acc, p.oct)), gain / ev.pitches.length, t, d)
+                  schedNote(ctx, midiToFreq(noteToMidi(p.note, p.acc, p.oct)), gain / ev.pitches.length, t, d)
           );
         }
         t += d;
@@ -152,48 +173,43 @@
 
 <div class="app">
   <Toolbar
-    {tempo}
-    {dur}
-    {dotted}
-    {dyn}
-    ontempchange={(v) => (tempo = v)}
-    ondurchange={(d) => (dur = d)}
-    ondottedtoggle={() => (dotted = !dotted)}
-    ondynchange={(d) => (dyn = d)}
-    onrest={handleRest}
-    onundo={handleUndo}
-    onclear={handleClear}
+          {tempo}
+          {dur}
+          {dotted}
+          {dyn}
+          canplay={!!notation}
+          isplaying={isPlaying}
+          ontempchange={(v) => (tempo = v)}
+          ondurchange={(d) => (dur = d)}
+          ondottedtoggle={() => (dotted = !dotted)}
+          ondynchange={(d) => (dyn = d)}
+          onrest={handleRest}
+          onundo={handleUndo}
+          onclear={handleClear}
+          onplay={handlePlay}
   />
 
   <TrackTabs
-    {tracks}
-    {currentTrack}
-    onselect={handleSelectTrack}
-    onadd={handleAddTrack}
+          {tracks}
+          {currentTrack}
+          onselect={handleSelectTrack}
+          onadd={handleAddTrack}
   />
 
   <PianoRoll
-    grid={tracks[currentTrack]._grid}
-    oncellclick={handleCellClick}
+          grid={tracks[currentTrack]._grid}
+          oncellclick={handleCellClick}
+          onpaintstart={handlePaintStart}
+          onpaintover={handlePaintOver}
+          onpaintend={handlePaintEnd}
   />
 
-  <NotationOutput {notation}>
-    {#snippet action()}
-      <button
-        class="play-btn"
-        class:playing={isPlaying}
-        onclick={handlePlay}
-        disabled={!notation}
-      >
-        {isPlaying ? 'stop' : 'play'}
-      </button>
-    {/snippet}
-  </NotationOutput>
+  <NotationOutput {notation} />
 </div>
 
 <style>
   .app {
-    background: var(--crust);
+    background: var(--color-bg-deep);
     border-radius: 12px;
     overflow: hidden;
     display: flex;
@@ -202,20 +218,4 @@
     max-height: 640px;
     font-family: var(--font-mono);
   }
-
-  .play-btn {
-    padding: 4px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--green);
-    background: transparent;
-    font-size: 11px;
-    color: var(--green);
-    cursor: pointer;
-    font-family: var(--font-mono);
-    transition: all 0.1s;
-  }
-
-  .play-btn:hover:not(:disabled) { background: var(--surface0); }
-  .play-btn.playing { background: var(--surface0); }
-  .play-btn:disabled { opacity: 0.4; cursor: default; }
 </style>

@@ -6,13 +6,16 @@
         dur,
         dotted,
         dyn,
+        canplay,
+        isplaying,
         ontempchange,
         ondurchange,
         ondottedtoggle,
         ondynchange,
         onrest,
         onundo,
-        onclear
+        onclear,
+        onplay
     } = $props();
 
     function handleTempo(ev) {
@@ -45,30 +48,54 @@
         <button class="tb-btn" onclick={onundo}>undo</button>
         <button class="tb-btn" onclick={onclear}>clear</button>
     </div>
+
+    <div class="sep"></div>
+
+    <div class="group">
+        <button
+                class="tb-btn play-btn"
+                class:playing={isplaying}
+                onclick={onplay}
+                disabled={!canplay}
+        >
+            {isplaying ? 'stop' : 'play'}
+        </button>
+    </div>
 </div>
 
 <style>
     .toolbar {
-        background-color: var(--mantle);
-        border-bottom: 1px solid var(--surface0);
+        background-color: var(--color-bg-sunken);
+        border-bottom: 1px solid var(--color-surface-low);
         padding: 8px 12px;
         display: flex;
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
     }
-    .sep { width: 1px; height: 20px; background: var(--surface0); margin: 0 4px; }
-    .label { font-size: 11px; color: var(--subtext); margin-right: 2px; font-family: var(--font-mono); }
+    .sep { width: 1px; height: 20px; background: var(--color-surface-low); margin: 0 4px; }
+    .label { font-size: 11px; color: var(--color-text-muted); margin-right: 2px; font-family: var(--font-mono); }
     .tb-btn {
-        padding: 3px 9px; border-radius: 4px; border: 1px solid var(--surface1);
-        background: var(--crust); color: var(--subtext); font-size: 11px; cursor: pointer;
+        padding: 3px 9px; border-radius: 4px; border: 1px solid var(--color-surface-mid);
+        background: var(--color-bg-deep); color: var(--color-text-muted); font-size: 11px; cursor: pointer;
         font-family: var(--font-mono); transition: all 0.1s;
     }
-    .tb-btn:hover { background: var(--surface0); color: var(--text); }
-    .tb-btn.on { background: var(--green); border-color: var(--green); color: var(--crust); }
+    .tb-btn:hover:not(:disabled) { background: var(--color-surface-low); color: var(--color-text-primary); }
+    .tb-btn.on { background: var(--color-accent-green); border-color: var(--color-accent-green); color: var(--color-bg-deep); }
+    .tb-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+    .play-btn {
+        border-color: var(--color-accent-green);
+        color: var(--color-accent-green);
+    }
+    .play-btn.playing {
+        background: var(--color-surface-low);
+    }
     .tb-input {
-        width: 85px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--surface1);
-        background: var(--crust); color: var(--text); font-size: 11px;
+        width: 85px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--color-surface-mid);
+        background: var(--color-bg-deep); color: var(--color-text-primary); font-size: 11px;
         font-family: var(--font-mono); text-align: center;
     }
 </style>

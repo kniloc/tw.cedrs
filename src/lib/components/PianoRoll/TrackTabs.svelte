@@ -26,23 +26,23 @@
 <style>
   .tracks {
     display: flex;
-    border-bottom: 1px solid var(--surface0);
+    border-bottom: 1px solid var(--color-surface-low);
   }
   .tab {
-    padding: 5px 14px; font-size: 11px; color: var(--subtext); cursor: pointer;
-    border-right: 1px solid var(--surface0); background: var(--crust);
+    padding: 5px 14px; font-size: 11px; color: var(--color-text-muted); cursor: pointer;
+    border-right: 1px solid var(--color-surface-low); background: var(--color-bg-deep);
     font-family: var(--font-mono); user-select: none;
   }
   .tab:hover { 
-    color: var(--text); 
+    color: var(--color-text-primary);
   }
   .tab.active { 
-    background: var(--mantle); color: var(--text); border-bottom: 1px solid var(--mantle);
+    background: var(--color-bg-sunken); color: var(--color-text-primary); border-bottom: 1px solid var(--color-bg-sunken);
   }
   .tab.add {
-    color: var(--surface2); padding: 5px 10px;
+    color: var(--color-surface-high); padding: 5px 10px;
   }
   .tab.add:hover {
-    color: var(--subtext);
+    color: var(--color-text-muted);
   }
 </style>
