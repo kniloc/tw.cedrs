@@ -19,9 +19,13 @@
   }
 
   .notation {
-    flex: 1; font-size: 11px; color: var(--color-accent-green);
-    font-family: var(--font-mono); word-break: break-all;
-    line-height: 1.5; min-height: 20px;
+    flex: 1;
+    font-size: var(--font-mono-size);
+    color: var(--color-accent-green);
+    font-family: var(--font-mono);
+    word-break: break-all;
+    line-height: 1.5;
+    min-height: 20px;
 
     &.empty {
       color: var(--color-surface-high);

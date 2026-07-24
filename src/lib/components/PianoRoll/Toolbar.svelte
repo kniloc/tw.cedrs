@@ -82,7 +82,8 @@
     }
 
     .label {
-        font-size: 11px;
+        cursor: default;
+        font-size: var(--font-mono-size);
         color: var(--color-text-muted);
         margin-right: 2px;
         font-family: var(--font-mono);
@@ -94,7 +95,8 @@
         border: 1px solid var(--color-surface-mid);
         background: var(--color-bg-deep);
         color: var(--color-text-muted);
-        font-size: 11px; cursor: pointer;
+        font-size: var(--font-mono-size);
+        cursor: pointer;
         font-family: var(--font-mono);
         transition: all 0.1s;
 
@@ -131,7 +133,7 @@
         border: 1px solid var(--color-surface-mid);
         background: var(--color-bg-deep);
         color: var(--color-text-primary);
-        font-size: 11px;
+        font-size: var(--font-mono-size);
         font-family: var(--font-mono);
         text-align: center;
     }

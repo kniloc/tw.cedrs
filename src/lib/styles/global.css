@@ -14,9 +14,12 @@
     --color-accent-lavender: #babbf1;
     --color-accent-blue: #8caaee;
 
+    --color-error: #e78284;
+
     --color-border: var(--color-surface-low);
 
-    --font-mono: "Monaspace Argon", monospace;
+    --font-mono: "IBM Plex Mono", monospace;
+    --font-mono-size: 12px;
 }
 
 @font-face {

@@ -25,9 +25,7 @@
   }
 
   function setGrid(updatedGrid) {
-    tracks = tracks.map((t, i) =>
-            i === currentTrack ? { ...t, _grid: updatedGrid } : t
-    );
+    tracks = tracks.map((t, i) => i === currentTrack ? { ...t, _grid: updatedGrid } : t);
   }
 
   let paintMode = $state(null); // 'add' | 'remove' | null while dragging
@@ -98,6 +96,20 @@
 
   function handleSelectTrack(i) {
     currentTrack = i;
+  }
+
+  function handleDeleteTrack(i) {
+    if (tracks.length === 1) {
+      handleClear();
+      return;
+    }
+
+    tracks = tracks.filter((_, idx) => idx !== i);
+    tracks.forEach((t, idx) => t.name = `track ${idx + 1}`);
+
+    if (currentTrack >= tracks.length) {
+      currentTrack = tracks.length - 1;
+    }
   }
 
   // Playback
@@ -195,6 +207,7 @@
           {currentTrack}
           onselect={handleSelectTrack}
           onadd={handleAddTrack}
+          ondelete={handleDeleteTrack}
   />
 
   <PianoRoll
