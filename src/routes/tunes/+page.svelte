@@ -208,6 +208,7 @@
           onselect={handleSelectTrack}
           onadd={handleAddTrack}
           ondelete={handleDeleteTrack}
+          onmiddleclick={handleDeleteTrack}
   />
 
   <PianoRoll

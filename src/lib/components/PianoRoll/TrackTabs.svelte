@@ -1,5 +1,5 @@
 <script>
-  let { tracks, currentTrack, onselect, onadd, ondelete } = $props();
+  let { tracks, currentTrack, onselect, onadd, ondelete, onmiddleclick } = $props();
 </script>
 
 <div class="tracks">
@@ -8,6 +8,7 @@
       class="tab"
       class:active={i === currentTrack}
       onclick={() => onselect(i)}
+      onmousedown={(e) => e.button === 1 && onmiddleclick(i)}
       role="tab"
       tabindex="0"
       aria-selected={i === currentTrack}
