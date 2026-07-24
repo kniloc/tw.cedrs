@@ -17,12 +17,14 @@
     gap: 8px;
     align-items: center;
   }
+
   .notation {
     flex: 1; font-size: 11px; color: var(--color-accent-green);
     font-family: var(--font-mono); word-break: break-all;
     line-height: 1.5; min-height: 20px;
-  }
-  .notation.empty {
-    color: var(--color-surface-high);
+
+    &.empty {
+      color: var(--color-surface-high);
+    }
   }
 </style>

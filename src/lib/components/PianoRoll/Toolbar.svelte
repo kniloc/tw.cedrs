@@ -1,5 +1,5 @@
 <script>
-    import { CONFIG } from "$lib/workers/notationProcessor";
+    import { CONFIG, DYNAMICS } from "$lib/workers/notationProcessor";
 
     let {
         tempo,
@@ -36,7 +36,7 @@
 
     <div class="group">
         <span class="label">dyn</span>
-        {#each CONFIG.DYNAMICS as dynamic}
+        {#each DYNAMICS as dynamic}
             <button class="tb-btn" class:on={dyn === dynamic} onclick={() => ondynchange(dynamic)}>{dynamic}</button>
         {/each}
     </div>
@@ -73,29 +73,66 @@
         align-items: center;
         flex-wrap: wrap;
     }
-    .sep { width: 1px; height: 20px; background: var(--color-surface-low); margin: 0 4px; }
-    .label { font-size: 11px; color: var(--color-text-muted); margin-right: 2px; font-family: var(--font-mono); }
-    .tb-btn {
-        padding: 3px 9px; border-radius: 4px; border: 1px solid var(--color-surface-mid);
-        background: var(--color-bg-deep); color: var(--color-text-muted); font-size: 11px; cursor: pointer;
-        font-family: var(--font-mono); transition: all 0.1s;
+
+    .sep {
+        width: 1px;
+        height: 20px;
+        background: var(--color-surface-low);
+        margin: 0 4px;
     }
-    .tb-btn:hover:not(:disabled) { background: var(--color-surface-low); color: var(--color-text-primary); }
-    .tb-btn.on { background: var(--color-accent-green); border-color: var(--color-accent-green); color: var(--color-bg-deep); }
+
+    .label {
+        font-size: 11px;
+        color: var(--color-text-muted);
+        margin-right: 2px;
+        font-family: var(--font-mono);
+    }
+
+    .tb-btn {
+        padding: 3px 9px;
+        border-radius: 4px;
+        border: 1px solid var(--color-surface-mid);
+        background: var(--color-bg-deep);
+        color: var(--color-text-muted);
+        font-size: 11px; cursor: pointer;
+        font-family: var(--font-mono);
+        transition: all 0.1s;
+
+        &.on {
+            background: var(--color-accent-green);
+            border-color: var(--color-accent-green);
+            color: var(--color-bg-deep);
+        }
+    }
+
+    .tb-btn:hover:not(:disabled) {
+        background: var(--color-surface-low);
+        color: var(--color-text-primary);
+    }
+
     .tb-btn:disabled {
         opacity: 0.4;
         cursor: default;
     }
+
     .play-btn {
         border-color: var(--color-accent-green);
         color: var(--color-accent-green);
+
+        &.playing {
+            background: var(--color-surface-low);
+        }
     }
-    .play-btn.playing {
-        background: var(--color-surface-low);
-    }
+
     .tb-input {
-        width: 85px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--color-surface-mid);
-        background: var(--color-bg-deep); color: var(--color-text-primary); font-size: 11px;
-        font-family: var(--font-mono); text-align: center;
+        width: 85px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--color-surface-mid);
+        background: var(--color-bg-deep);
+        color: var(--color-text-primary);
+        font-size: 11px;
+        font-family: var(--font-mono);
+        text-align: center;
     }
 </style>

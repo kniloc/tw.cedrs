@@ -142,16 +142,17 @@
 
     const secPerBeat = 60 / tempo;
     const allEvents = tracks.map(t => gridToEvents(t._grid || {})).filter(e => e.length);
-    const maxLen = Math.max(...allEvents.map(evs =>
-            evs.reduce((s, e) => s + durBeats(e.dur, e.dotted) * secPerBeat, 0)
+    const maxLen = Math.max(...allEvents.map(evs => evs.reduce((s, e) => s + durBeats(e.dur, e.dotted) * secPerBeat, 0)
     ));
 
     for (const evs of allEvents) {
       let t = ctx.currentTime + 0.05;
       for (const ev of evs) {
         if (stopSig) break;
+
         const d = durBeats(ev.dur, ev.dotted) * secPerBeat;
         const gain = DYN_GAIN[ev.dyn] || 0.65;
+
         if (ev.type === 'note') {
           schedNote(ctx, midiToFreq(noteToMidi(ev.note, ev.acc, ev.oct)), gain, t, d);
         } else if (ev.type === 'chord') {

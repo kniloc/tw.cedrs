@@ -11,9 +11,13 @@
 
     function cellClass(row, col, grid) {
         const classes = ['cell'];
+
         if (row.black) classes.push('black-row');
-        if (col % 16 === 15) classes.push('bar');
-        else if (col % 4 === 3) classes.push('beat');
+        if (col % 16 === 15) {
+            classes.push('bar');
+        } else if (col % 4 === 3) {
+            classes.push('beat');
+        }
 
         const k = cellKey(rows.indexOf(row), col);
         if(grid[k]) {
@@ -106,7 +110,11 @@
 </div>
 
 <style>
-    .roll-area { display: flex; flex: 1; overflow: hidden; }
+    .roll-area {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
 
     .keys {
         width: 60px;
@@ -114,35 +122,106 @@
         overflow-y: auto;
         border-right: 1px solid var(--color-surface-low);
         scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
     }
-    .keys::-webkit-scrollbar { display: none; }
 
     .key {
-        height: 24px; display: flex; align-items: center; justify-content: flex-end;
-        padding-right: 8px; font-size: 10px; border-bottom: 1px solid var(--color-surface-low);
-        user-select: none; font-family: var(--font-mono);
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        font-size: 10px;
+        border-bottom: 1px solid var(--color-surface-low);
+        user-select: none;
+        font-family: var(--font-mono);
+
+        &.white {
+            background: var(--color-surface-low);
+            color: var(--color-text-muted);
+        }
+
+        &.black {
+            background: var(--color-bg-deep);
+            color: var(--color-surface-high);
+        }
+
+        &.c-note {
+            color: var(--color-text-primary);
+        }
     }
-    .key.white { background: var(--color-surface-low); color: var(--color-text-muted); }
-    .key.black { background: var(--color-bg-deep); color: var(--color-surface-high); }
-    .key.c-note { color: var(--color-text-primary); }
 
-    .grid-scroll { flex: 1; overflow: auto; }
-    .grid-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-    .grid-scroll::-webkit-scrollbar-track { background: var(--color-bg-sunken); }
-    .grid-scroll::-webkit-scrollbar-thumb { background: var(--color-surface-mid); border-radius: 3px; }
+    .grid-scroll {
+        flex: 1; overflow: auto;
 
-    .grid { position: relative; display: grid; user-select: none; }
+        &::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--color-bg-sunken);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--color-surface-mid);
+            border-radius: 3px;
+        }
+    }
+
+    .grid {
+        position: relative;
+        display: grid;
+        user-select: none;
+    }
 
     .cell {
-        height: 24px; border-bottom: 1px solid var(--color-surface-low); border-right: 1px solid var(--color-surface-mid);
+        height: 24px;
+        border-bottom: 1px solid var(--color-surface-low);
+        border-right: 1px solid var(--color-surface-mid);
         cursor: pointer;
+
+        &.beat {
+            border-right: 1px solid var(--color-surface-mid);
+        }
+
+        &.bar {
+            border-right: 1px solid var(--color-surface-high);
+        }
+
+        &.black-row {
+            background: var(--color-bg-deep);
+        }
+
+        &.filled {
+            background: var(--color-accent-green);
+            border-color: var(--color-accent-green);
+            border-radius: 2px;
+            z-index: 1;
+
+            &:hover {
+                background: var(--color-accent-green);
+                filter: brightness(1.2)
+            }
+        }
+
+        &.chord-fill {
+            background: var(--color-accent-lavender);
+            border-color: var(--color-accent-lavender);
+            border-radius: 2px;
+            z-index: 1;
+
+            &:hover {
+                background: var(--color-accent-lavender);
+                filter: brightness(1.2);
+            }
+        }
+
+        &:not(.filled):not(.chord-fill):hover {
+            background: var(--color-surface-low);
+        }
     }
-    .cell.beat { border-right: 1px solid var(--color-surface-mid); }
-    .cell.bar { border-right: 1px solid var(--color-surface-high); }
-    .cell.black-row { background: var(--color-bg-deep); }
-    .cell.filled { background: var(--color-accent-green); border-color: var(--color-accent-green); border-radius: 2px; z-index: 1; }
-    .cell.filled:hover { background: var(--color-accent-green); filter: brightness(1.2); }
-    .cell.chord-fill { background: var(--color-accent-lavender); border-color: var(--color-accent-lavender); border-radius: 2px; z-index: 1; }
-    .cell.chord-fill:hover { background: var(--color-accent-lavender); filter: brightness(1.2); }
-    .cell:not(.filled):not(.chord-fill):hover { background: var(--color-surface-low); }
 </style>
