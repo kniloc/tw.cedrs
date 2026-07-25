@@ -1,31 +1,27 @@
 <script>
-    import { CONFIG, DYNAMICS } from "$lib/workers/notationProcessor";
-
+    import { CONFIG } from "$lib/workers/notationProcessor";
     let {
         tempo,
-        dur,
-        dotted,
+        sub,
         dyn,
         canplay,
         isplaying,
         ontempchange,
-        ondurchange,
-        ondottedtoggle,
+        onsubchange,
         ondynchange,
         onrest,
         onundo,
         onclear,
         onplay
     } = $props();
-
+    
     function handleTempo(ev) {
-        const v = Math.max(30, Math.min(250, +ev.target.value))
+        const v = Math.max(30, Math.min(250, +ev.target.value));
         ontempchange(v);
         ev.target.value = v;
     }
 </script>
 
-<!-- TODO restructure later to be more semantic -->
 <div class="toolbar">
     <div class="group">
         <span class="label">bpm</span>
@@ -35,8 +31,17 @@
     <div class="sep"></div>
 
     <div class="group">
-        <span class="label">dyn</span>
-        {#each DYNAMICS as dynamic}
+        <span class="label">grid</span>
+        {#each [[4, '1/4'], [2, '1/8'], [1, '1/16']] as [s, label]}
+            <button class="tb-btn" class:on={sub === s} onclick={() => onsubchange(s)}>{label}</button>
+        {/each}
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="group">
+        <span class="labe">dyn</span>
+        {#each CONFIG.DYNAMICS as dynamic}
             <button class="tb-btn" class:on={dyn === dynamic} onclick={() => ondynchange(dynamic)}>{dynamic}</button>
         {/each}
     </div>

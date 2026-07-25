@@ -2,7 +2,7 @@ export const CONFIG = {
     NOTES: ['B','Bb','A','Ab','G','Gb','F','E','Eb','D','Db','C'],
     BLACK_NOTES: new Set(['Bb', 'Ab', 'Gb', 'Eb', 'Db']),
     OCTAVES: [6, 5, 4, 3, 2],
-    COLS: 32
+    COLS: 64
 };
 
 export const DUR_BEATS = { w:4, h:2, q:1, e:0.5, s:0.25 };
@@ -46,59 +46,81 @@ export function durBeats(dur, dotted) {
     return (DUR_BEATS[dur] || 1) * (dotted ? 1.5 : 1)
 }
 
+// 1 grid column = 1 sixteenth note; span → (dur, dotted)
+const SPAN_DUR_MAP = {
+    1:  { dur: 's', dotted: false },
+    2:  { dur: 'e', dotted: false },
+    3:  { dur: 'e', dotted: true  },
+    4:  { dur: 'q', dotted: false },
+    6:  { dur: 'q', dotted: true  },
+    8:  { dur: 'h', dotted: false },
+    12: { dur: 'h', dotted: true  },
+    16: { dur: 'w', dotted: false },
+};
+
+export function spanToDur(span) {
+    if (SPAN_DUR_MAP[span]) {
+        return SPAN_DUR_MAP[span];
+    }
+    const keys = Object.keys(SPAN_DUR_MAP).map(Number);
+    const closest = keys.reduce((a, b) => Math.abs(b - span) < Math.abs(a - span) ? b : a);
+    return SPAN_DUR_MAP[closest];
+}
+
 export function cellKey(r, c) {
     return `${r},${c}`;
 }
 
 export function gridToEvents(grid) {
-  const byCol = {};
-  for (const [k, v] of Object.entries(grid)) {
-    const [r, c] = k.split(',').map(Number);
-    if (!byCol[c]) byCol[c] = [];
-    byCol[c].push({ ...v, row: r });
-  }
- 
-  const sorted = Object.keys(byCol).map(Number).sort((a, b) => a - b);
-  const events = [];
-  let lastCol = -1;
- 
-  for (const col of sorted) {
-    if (lastCol >= 0) {
-      const gap = col - lastCol - 1;
-      if (gap > 0) {
-        events.push({ type: 'rest', dur: 'q', dotted: false, dyn: 'mf' });
-      }
+    const byCol = {};
+    for (const [k, v] of Object.entries(grid)) {
+        const [r, c] = k.split(',').map(Number);
+        if (!byCol[c]) byCol[c] = [];
+        byCol[c].push({ ...v, row: r });
     }
- 
-    const notes = byCol[col];
-    const first = notes[0];
- 
-    if (first.type === 'rest') {
-        events.push({ type: 'rest', dur: first.dur, dotted: first.dotted, dyn: first.dyn });
-    } else if (notes.length === 1) {
-        events.push({
-            type: 'note',
-            note: noteName(first.note),
-            acc: accOf(first.note),
-            oct: first.oct,
-            dur: first.dur,
-            dotted: first.dotted,
-            dyn: first.dyn,
-        });
-    } else {
-    events.push({
-        type: 'chord',
-        pitches: notes.map(n => ({ note: noteName(n.note), acc: accOf(n.note), oct: n.oct })),
-        dur: first.dur,
-        dotted: first.dotted,
-        dyn: first.dyn,
-    });
+
+    const sorted = Object.keys(byCol).map(Number).sort((a, b) => a - b);
+    const events = [];
+    let lastEnd = -1;
+
+    for (const col of sorted) {
+        const notes = byCol[col];
+        const first = notes[0];
+        const span = first.span ?? 4;
+        const { dur, dotted } = spanToDur(span);
+
+        if (lastEnd >= 0 && col > lastEnd) {
+            const gap = col - lastEnd;
+            const gapDur = spanToDur(gap);
+            events.push({ type: 'rest', dur: gapDur.dur, dotted: gapDur.dotted, dyn: 'mf' });
+        }
+
+        if (first.type === 'rest') {
+            events.push({ type: 'rest', dur, dotted, dyn: first.dyn });
+        } else if (notes.length === 1) {
+            events.push({
+                type: 'note',
+                note: noteName(first.note),
+                acc: accOf(first.note),
+                oct: first.oct,
+                dur,
+                dotted,
+                dyn: first.dyn,
+            });
+        } else {
+            events.push({
+                type: 'chord',
+                pitches: notes.map(n => ({ note: noteName(n.note), acc: accOf(n.note), oct: n.oct })),
+                dur,
+                dotted,
+                dyn: first.dyn,
+            });
+        }
+
+        lastEnd = col + span;
     }
- 
-    lastCol = col;
-  }
- 
-  return events;
+
+    return events;
 }
 
 export function buildNotation(tempo, tracks) {
@@ -114,25 +136,25 @@ export function buildNotation(tempo, tracks) {
         const tokens = [`t${tempo}`];
         let lastDyn = null;
 
-        for (const ev of events) {
-            if (ev.type !== 'rest' && ev.dyn !== lastDyn) {
-                tokens.push(ev.dyn);
-                lastDyn = ev.dyn;
+        for (const event of events) {
+            if (event.type !== 'rest' && event.dyn !== lastDyn) {
+                tokens.push(event.dyn);
+                lastDyn = event.dyn;
             }
 
-            const dot = ev.dotted ? '.' : '';
-            if (ev.type === 'note') {
-                tokens.push(`${ev.note}${ev.acc}${ev.oct}${ev.dur}${dot}`);
-            } else if (ev.type === 'rest') {
-                tokens.push(`r${ev.dur}${dot}`);
-            } else if (ev.type === 'chord') {
-                const inner = ev.pitches.map(p => `${p.note}${p.acc}${p.oct}`).join(' ');
-                tokens.push(`[${inner}${ev.dur}${dot}]`)
+            const dot = event.dotted ? '.' : '';
+            if (event.type === 'note') {
+                tokens.push(`${event.note}${event.acc}${event.oct}${event.dur}${dot}`);
+            } else if (event.type === 'rest') {
+                tokens.push(`r${event.dur}${dot}`);
+            } else if (event.type === 'chord') {
+                const inner = event.pitches.map(p => `${p.note}${p.acc}${p.oct}`).join(' ');
+                tokens.push(`[${inner}${event.dur}${dot}]`);
             }
         }
 
         parts.push(tokens.join(' '));
     }
 
-    return parts.join (' | ');
+    return parts.join(' | ');
 }

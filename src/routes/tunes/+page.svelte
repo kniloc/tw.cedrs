@@ -8,8 +8,7 @@
 
   // Toolbar state
   let tempo = $state(120);
-  let dur = $state('q');
-  let dotted = $state(false);
+  let sub = $state(4); // grid cell resolution: 4=quarter, 2=eighth, 1=sixteenth
   let dyn = $state('mf');
 
   // Tracks — each has a name and a grid { "r,c": cellData }
@@ -28,43 +27,28 @@
     tracks = tracks.map((t, i) => i === currentTrack ? { ...t, _grid: updatedGrid } : t);
   }
 
-  let paintMode = $state(null); // 'add' | 'remove' | null while dragging
 
-  function applyPaint(ri, col, mode) {
+  function handlePlace(ri, col, span) {
+    const g = {...currentGrid()};
     const k = cellKey(ri, col);
-    const exists = !!currentGrid()[k];
-    if ((mode === 'add' && exists) || (mode === 'remove' && !exists)) return;
-    const g = { ...currentGrid() };
-    if (mode === 'add') {
-      g[k] = {
-        note: rows[ri].note,
-        oct: rows[ri].oct,
-        row: ri,
-        dur,
-        dotted,
-        dyn,
-      };
-    } else {
-      delete g[k];
+    if (g[k]) return;
+
+    let clampedSpan = span;
+    for (let c = col + 1; c < col + span; c++) {
+      if (g[cellKey(ri, c)]) {
+        clampedSpan = c - col;
+        break;
+      }
     }
+
+    g[k] = { note: rows[ri].note, oct: rows[ri].oct, row: ri, span: clampedSpan, dyn };
     setGrid(g);
   }
 
-  function handleCellClick(ri, col) {
-    applyPaint(ri, col, currentGrid()[cellKey(ri, col)] ? 'remove' : 'add');
-  }
-
-  function handlePaintStart(ri, col) {
-    paintMode = currentGrid()[cellKey(ri, col)] ? 'remove' : 'add';
-    applyPaint(ri, col, paintMode);
-  }
-
-  function handlePaintOver(ri, col) {
-    if (paintMode) applyPaint(ri, col, paintMode);
-  }
-
-  function handlePaintEnd() {
-    paintMode = null;
+  function handleDelete(ri, col) {
+    const g = { ...currentGrid() };
+    delete g[cellKey(ri, col)];
+    setGrid(g);
   }
 
   function handleRest() {
@@ -187,14 +171,12 @@
 <div class="app">
   <Toolbar
           {tempo}
-          {dur}
-          {dotted}
+          {sub}
           {dyn}
           canplay={!!notation}
           isplaying={isPlaying}
           ontempchange={(v) => (tempo = v)}
-          ondurchange={(d) => (dur = d)}
-          ondottedtoggle={() => (dotted = !dotted)}
+          onsubchange={(s) => (sub = s)}
           ondynchange={(d) => (dyn = d)}
           onrest={handleRest}
           onundo={handleUndo}
@@ -213,10 +195,9 @@
 
   <PianoRoll
           grid={tracks[currentTrack]._grid}
-          oncellclick={handleCellClick}
-          onpaintstart={handlePaintStart}
-          onpaintover={handlePaintOver}
-          onpaintend={handlePaintEnd}
+          {sub}
+          onplace={handlePlace}
+          ondelete={handleDelete}
   />
 
   <NotationOutput {notation} />

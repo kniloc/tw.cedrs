@@ -1,73 +1,57 @@
 <script>
-    import { buildRows, cellKey, CONFIG } from "$lib/workers/notationProcessor";
-    import { onMount, tick } from "svelte";
+    import {buildRows, CONFIG} from "$lib/workers/notationProcessor.js";
+    import {onMount} from "svelte";
 
-    let { grid, oncellclick, onpaintstart, onpaintover, onpaintend } = $props();
+    let {grid, sub, onplace, ondelete} = $props();
 
     const rows = buildRows();
-    const cols = Array.from({ length: CONFIG.COLS }, (_, i) => i);
-    const ROW_HEIGHT = 24;
-    const C4_INDEX = rows.findIndex(r => r.note === 'C' && r.oct === 4);
+    const cols = $derived(Array.from({ length: CONFIG.COLS / sub }, (_, i) => i));
+    const cellPx = $derived(sub * 20);
 
-    function cellClass(row, col, grid) {
-        const classes = ['cell'];
+    let dragAnchor = $state(null);
+    let dragEndCol = $state(null);
 
-        if (row.black) classes.push('black-row');
-        if (col % 16 === 15) {
-            classes.push('bar');
-        } else if (col % 4 === 3) {
-            classes.push('beat');
-        }
-
-        const k = cellKey(rows.indexOf(row), col);
-        if(grid[k]) {
-            const isChord = Object.keys(grid).some(other => {
-                const [, c] = other.split(',').map(Number);
-                return c === col && other !== k;
+    const overlays = $derived(
+        Object.entries(grid).filter(([, v]) => v.type !== 'rest')
+            .map(([k, v]) => {
+                const [ri, col] = k.split(',').map(Number);
+                const isChord = Object.keys(grid).some(other => {
+                    const [, c] = other.split(',').map(Number);
+                    return +c === col && other !== k;
+                });
+                return {ri, col, span: v.span ?? 4, isChord};
             })
-            classes.push(isChord ? 'chord-fill': 'filled');
-        }
+    );
 
-        return classes.join(' ');
-    }
+    const dragPreview = $derived(
+        dragAnchor ? {
+            ri: dragAnchor.ri,
+            col: dragAnchor.col,
+            span: Math.max(1, (dragEndCol ?? dragAnchor.col) - dragAnchor.col + 1)
+        } : null
+    );
 
     let scrollEl = $state(null);
     let keysEl = $state(null);
 
-    function centerOnC4() {
-        if (!scrollEl || !keysEl || C4_INDEX < 0 || !scrollEl.clientHeight) return false;
-
-        const c4Center = C4_INDEX * ROW_HEIGHT + ROW_HEIGHT / 2;
-        const target = c4Center - scrollEl.clientHeight / 2;
-        const maxScrollTop = scrollEl.scrollHeight - scrollEl.clientHeight;
-        const scrollTop = Math.max(0, Math.min(target, maxScrollTop));
-
-        scrollEl.scrollTop = scrollTop;
-        keysEl.scrollTop = scrollTop;
-
-        return true;
-    }
-
-    onMount(async () => {
-        let observer;
-
-        tick().then(() => {
-            if (centerOnC4()) return;
-
-            observer = new ResizeObserver(() => {
-                if (centerOnC4()) {
-                    observer.disconnect();
-                }
-            });
-
-            if (scrollEl) {
-                observer.observe(scrollEl);
-            }
-        });
-
-        return () => {
-            observer?.disconnect();
+    onMount(() => {
+        if (scrollEl && keysEl) {
+            const target = rows.findIndex(r => r.note === 'C' && r.oct === 4) * 24;
+            scrollEl.scrollTop = target;
+            keysEl.scrollTop = target;
         }
+
+        function handleWindowMouseUp() {
+            if (dragAnchor) {
+                const span = Math.max(1, (dragEndCol ?? dragAnchor.col) - dragAnchor.col + 1);
+                onplace(dragAnchor.ri, dragAnchor.col, span);
+                dragAnchor = null;
+                dragEndCol = null;
+            }
+        }
+
+        window.addEventListener('mouseup', handleWindowMouseUp);
+        return () => window.removeEventListener('mouseup', handleWindowMouseUp);
     });
 
     function onGridScroll(ev) {
@@ -77,9 +61,34 @@
     function onKeysScroll(ev) {
         if (scrollEl) scrollEl.scrollTop = ev.target.scrollTop;
     }
-</script>
 
-<svelte:window onmouseup={onpaintend} />
+    function handleCellMousedown(ri, absCol) {
+        dragAnchor = { ri, col: absCol };
+        dragEndCol = absCol + sub - 1;
+    }
+
+    function handleCellMouseenter(ri, vi) {
+        if (!dragAnchor || dragAnchor.ri !== ri) return;
+        const absEnd = vi * sub + (sub - 1);
+        dragEndCol = Math.max(dragAnchor.col + sub - 1, absEnd);
+    }
+
+    function cellClass(row, vi) {
+        const classes = ['cell'];
+        if (row.black) classes.push('black-row');
+
+        const barInt = 16 / sub;
+        const beatInt = 4 / sub;
+
+        if (vi & barInt - 1) {
+            classes.push('bar');
+        } else if (beatInt >= 2 && vi % beatInt === beatInt - 1) {
+            classes.push('beat');
+        }
+
+        return classes.join(' ');
+    }
+</script>
 
 <div class="roll-area">
     <div class="keys" bind:this={keysEl} onscroll={onKeysScroll}>
@@ -91,20 +100,33 @@
     </div>
 
     <div class="grid-scroll" bind:this={scrollEl} onscroll={onGridScroll}>
-        <div class="grid" style="grid-template-columns: repeat({CONFIG.COLS}, 30px); grid-template-rows: repeat({rows.length}, 24px);">
+        <div class="grid" style="grid-template-columns: repeat({CONFIG.COLS / sub}, {cellPx}px); grid-template-rows: repeat({rows.length}, 24px);">
             {#each rows as row, ri}
-                {#each cols as col}
+                {#each cols as vi}
                     <div
-                            class={cellClass(row, col, grid)}
-                            onmousedown={(e) => { e.preventDefault(); onpaintstart(ri, col); }}
-                            onmouseenter={(e) => { if (e.buttons === 1) onpaintover(ri, col); }}
-                            role="button"
-                            tabindex="0"
-                            aria-label="{row.note}{row.oct} col {col}"
-                            onkeydown={(e) => e.key === 'Enter' && oncellclick(ri, col)}
+                        class={cellClass(row, vi)}
+                        onmousedown={() => handleCellMousedown(ri, vi * sub)}
+                        onmouseenter={() => handleCellMouseenter(ri, vi)}
+                        role="button"
+                        tabindex="0"
+                        aria-label="{row.note}{row.oct} col {vi * sub}"
+                        onkeydown={(e) => e.key === 'Enter' && onplace(ri, vi * sub, sub)}
                     ></div>
                 {/each}
             {/each}
+
+            {#each overlays as o (`${o.ri},${o.col}`)}
+                <div class="note-overlay {o.isChord ? 'chord' : ''}"
+                     style="left: {o.col * 20}px; top: {o.ri * 24}px; width: {o.span * 20 - 2}px; height: 23px; pointer-events: {dragAnchor ? 'none' : 'auto'};"
+                     onmousedown={(e) => { e.stopPropagation(); ondelete(o.ri, o.col); }}
+                ></div>
+            {/each}
+
+            {#if dragPreview}
+                <div class="note-overlay preview"
+                    style="left: {dragPreview.col * 20}px; top: {dragPreview.ri * 24}px; width: {dragPreview.span * 20 - 2}px; height: 23px; pointer-events: none;"
+                ></div>
+            {/if}
         </div>
     </div>
 </div>
@@ -222,6 +244,28 @@
 
         &:not(.filled):not(.chord-fill):hover {
             background: var(--color-surface-low);
+        }
+    }
+
+    .note-overlay {
+        position: absolute;
+        background: var(--color-accent-green);
+        border-radius: 2px;
+        z-index: 2;
+        cursor: pointer;
+
+        &.chord {
+            background: var(--color-accent-lavender);
+        }
+
+        &.preview {
+            background: var(--color-accent-green);
+            opacity: 0.4;
+            cursor: crosshair;
+        }
+
+        &:not(.preview):hover {
+            filter: brightness(1.2);
         }
     }
 </style>
