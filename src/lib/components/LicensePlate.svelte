@@ -61,7 +61,7 @@
         if (!src || !canvasEl) return;
         if (!worker) {
             worker = new Worker(
-                new URL('#lib/workers/plateProcessor.js', import.meta.url),
+                new URL('../workers/plateProcessor.js', import.meta.url),
                 {type: 'module'}
             );
         }
