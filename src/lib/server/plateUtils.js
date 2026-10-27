@@ -1,6 +1,6 @@
-import {list} from "@vercel/blob";
-import {Pool} from "pg";
-import {PLATEIMG_READ_WRITE_TOKEN, X_POSTGRES_URL} from "$env/static/private";
+import { list } from "@vercel/blob";
+import { Pool } from "pg";
+import { PLATEIMG_READ_WRITE_TOKEN, X_POSTGRES_URL } from "$app/env/private";
 
 const dbPool = new Pool({
     connectionString: X_POSTGRES_URL
@@ -23,10 +23,9 @@ export async function getCollection(userID) {
 
 export async function getLicensePlateImages(regions) {
     const blobs = await getImagesFromBlob();
-    return Object.fromEntries(
-        regions.map(region => [
-            region,
-            blobs.find(blob => blob.pathname === `plates/${region}.png`)?.url ?? null
-        ])
-    );
+
+    return Object.fromEntries(regions.map((region) => [
+        region,
+        blobs.find((blob) => blob.pathname === `plates/${region}.png`)?.url ?? null
+    ]));
 }

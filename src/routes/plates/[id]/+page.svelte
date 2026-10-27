@@ -1,6 +1,6 @@
 <script>
-    import LicensePlate from '$lib/components/LicensePlate.svelte';
-    import Title from "$lib/components/Title.svelte";
+    import LicensePlate from '#lib/components/LicensePlate.svelte';
+    import Title from "#lib/components/Title.svelte";
 
     const {data} = $props();
     const username = $derived(data.plates[0]?.username);

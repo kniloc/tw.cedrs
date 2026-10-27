@@ -1,5 +1,5 @@
 import {error} from "@sveltejs/kit";
-import {getCollection, getLicensePlateImages} from "$lib/server/plateUtils.js";
+import {getCollection, getLicensePlateImages} from "#lib/server/plateUtils.js";
 
 export async function load({params}) {
     const userCollection = await getCollection(params.id);
